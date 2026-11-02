@@ -129,8 +129,20 @@ impl KeyInfo {
         Ok(Some(token))
     }
 
+    /// Replaces the host of `url` if it has an alias. An alias with a scheme,
+    /// like `http://heimdall:3000`, replaces the scheme too, which an
+    /// instance served over plain HTTP needs: SSH remotes otherwise resolve
+    /// to `https://`.
     pub fn deref_alias(&self, url: url::Url) -> url::Url {
         match self.aliases.get(crate::host_name(&url)) {
+            Some(replacement) if replacement.contains("://") => {
+                let s = format!(
+                    "{}{}",
+                    replacement.trim_end_matches('/'),
+                    &url[url::Position::AfterPort..]
+                );
+                url::Url::parse(&s).unwrap_or(url)
+            }
             Some(replacement) => {
                 let s = format!(
                     "{}{}{}",
@@ -217,5 +229,30 @@ impl LoginInfo {
                 Ok(api)
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn aliases_with_and_without_scheme() {
+        let mut keys = KeyInfo::default();
+        keys.aliases.insert("heimdall".into(), "http://heimdall:3000".into());
+        keys.aliases.insert("git.example".into(), "example.org".into());
+        let url = |s: &str| Url::parse(s).unwrap();
+        assert_eq!(
+            keys.deref_alias(url("https://heimdall/")).as_str(),
+            "http://heimdall:3000/"
+        );
+        assert_eq!(
+            keys.deref_alias(url("https://git.example/")).as_str(),
+            "https://example.org/"
+        );
+        assert_eq!(
+            keys.deref_alias(url("https://other/")).as_str(),
+            "https://other/"
+        );
     }
 }

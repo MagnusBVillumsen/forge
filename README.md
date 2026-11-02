@@ -34,6 +34,9 @@ What `forge` adds:
   (Forgejo 16 or newer).
 - `FORGE_TOKEN` overrides the stored login, like `GH_TOKEN`, so each agent or
   CI job can act as its own user.
+- `FORGE_HOST` is the instance to use outside a repo.
+- A host alias with a scheme (`"aliases": {"heimdall": "http://heimdall:3000"}`
+  in `keys.json`) maps SSH remotes to an instance served over plain HTTP.
 
 Logins are stored separately from `fj`'s, in `forge`'s own data directory, so
 the two can be installed side by side.

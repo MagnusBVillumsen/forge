@@ -228,7 +228,9 @@ impl RepoInfo {
 }
 
 fn fallback_host() -> Option<Url> {
-    if let Some(envvar) = std::env::var_os("FJ_FALLBACK_HOST") {
+    // FJ_FALLBACK_HOST is fj's name for it.
+    let envvar = std::env::var_os("FORGE_HOST").or_else(|| std::env::var_os("FJ_FALLBACK_HOST"));
+    if let Some(envvar) = envvar {
         let out = envvar.to_str().and_then(|x| x.parse::<Url>().ok());
         if out.is_none() {
             ftl_eprintln!("msg-repo-fallback_host-invalid_url");

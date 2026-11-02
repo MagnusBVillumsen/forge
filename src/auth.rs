@@ -347,8 +347,11 @@ async fn add_ssh_alias(
         let http_host = crate::host_name(host_url);
         let ssh_host = crate::host_name(&ssh_url);
         if http_host != ssh_host {
-            keys.aliases
-                .insert(ssh_host.to_string(), http_host.to_string());
+            let target = match host_url.scheme() {
+                "https" => http_host.to_string(),
+                scheme => format!("{scheme}://{http_host}"),
+            };
+            keys.aliases.insert(ssh_host.to_string(), target);
         }
     }
 }
