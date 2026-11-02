@@ -8,7 +8,8 @@ use eyre::{Context, OptionExt};
 use forgejo_api::{
     CountHeader, Forgejo,
     structs::{
-        CreatePullRequestOption, MergePullRequestOption, PullReview, PullReviewComment,
+        CreatePullRequestOption, CreatePullReviewComment, CreatePullReviewOptions,
+        MergePullRequestOption, PullReview, PullReviewComment,
         PullReviewRequestOptions, RepoGetPullRequestCommitsQuery, RepoGetPullRequestFilesQuery,
         StateType,
     },
@@ -432,6 +433,41 @@ pub enum ReviewCommand {
         #[clap(help = h!("arg-pr-review-list-all"))]
         #[clap(long, short)]
         all: bool,
+        #[clap(flatten)]
+        json: JsonArgs,
+    },
+    #[clap(about = h!("cmd-pr-review-submit"), long_about = lh!("cmd-pr-review-submit"))]
+    #[clap(group = clap::ArgGroup::new("event").args(["approve", "request_changes", "comment"]))]
+    Submit {
+        #[clap(help = h!("arg-pr-review-submit-approve"))]
+        #[clap(long)]
+        approve: bool,
+        #[clap(help = h!("arg-pr-review-submit-request_changes"))]
+        #[clap(long)]
+        request_changes: bool,
+        #[clap(help = h!("arg-pr-review-submit-comment"))]
+        #[clap(long)]
+        comment: bool,
+        #[clap(help = h!("arg-pr-review-submit-body"))]
+        #[clap(long, short)]
+        body: Option<String>,
+        #[clap(help = h!("arg-pr-review-submit-body_file"))]
+        #[clap(long, conflicts_with = "body")]
+        body_file: Option<PathBuf>,
+        #[clap(help = h!("arg-pr-review-submit-line"))]
+        #[clap(long = "line", value_name = "PATH:LINE[-END]=BODY")]
+        lines: Vec<String>,
+        #[clap(help = h!("arg-pr-review-submit-old_line"))]
+        #[clap(long = "old-line", value_name = "PATH:LINE[-END]=BODY")]
+        old_lines: Vec<String>,
+        #[clap(help = h!("arg-pr-review-submit-comments_file"), long_help = lh!("arg-pr-review-submit-comments_file"))]
+        #[clap(long, value_name = "FILE")]
+        comments_file: Option<PathBuf>,
+        #[clap(help = h!("arg-pr-review-submit-commit"))]
+        #[clap(long)]
+        commit: Option<String>,
+        #[clap(flatten)]
+        json: JsonArgs,
     },
     #[clap(about = h!("cmd-pr-review-request"))]
     #[group(required = true, multiple = true)]
@@ -690,9 +726,49 @@ impl PrCommand {
                 match command.unwrap_or(ReviewCommand::List {
                     comments: false,
                     all: false,
+                    json: JsonArgs::default(),
                 }) {
-                    ReviewCommand::List { comments, all } => {
-                        view_pr_reviews(repo, &api, id, comments, all).await?
+                    ReviewCommand::List {
+                        comments,
+                        all,
+                        json,
+                    } => view_pr_reviews(repo, &api, id, comments, all, &json).await?,
+                    ReviewCommand::Submit {
+                        approve,
+                        request_changes,
+                        comment: _,
+                        body,
+                        body_file,
+                        lines,
+                        old_lines,
+                        comments_file,
+                        commit,
+                        json,
+                    } => {
+                        let event = if approve {
+                            "APPROVED"
+                        } else if request_changes {
+                            "REQUEST_CHANGES"
+                        } else {
+                            "COMMENT"
+                        };
+                        let mut comments = Vec::new();
+                        for spec in &lines {
+                            comments.push(parse_review_line(spec, false)?);
+                        }
+                        for spec in &old_lines {
+                            comments.push(parse_review_line(spec, true)?);
+                        }
+                        if let Some(path) = &comments_file {
+                            comments.extend(read_review_comments(path)?);
+                        }
+                        let body = match (body, body_file) {
+                            (Some(body), _) => Some(body),
+                            (None, Some(path)) => Some(read_text(&path)?),
+                            (None, None) => None,
+                        };
+                        submit_pr_review(repo, &api, id, event, body, comments, commit, &json)
+                            .await?
                     }
                     ReviewCommand::Request {
                         reviewers,
@@ -2254,6 +2330,7 @@ pub async fn view_pr_reviews(
     pr: Option<i64>,
     comments: bool,
     include_stale: bool,
+    json: &JsonArgs,
 ) -> eyre::Result<()> {
     let pr = try_get_pr(repo, api, pr).await?;
     let pr_number = pr.number.ok_or_eyre("pr does not have number")?;
@@ -2262,6 +2339,24 @@ pub async fn view_pr_reviews(
         .repo_list_pull_reviews(repo.owner(), repo.name(), pr_number)
         .all()
         .await?;
+
+    if json.enabled() {
+        let mut out = Vec::new();
+        for review in reviews {
+            if !include_stale && (review.stale == Some(true) || review.dismissed == Some(true)) {
+                continue;
+            }
+            let mut value = serde_json::to_value(&review)?;
+            if comments && let Some(review_id) = review.id {
+                let review_comments = api
+                    .repo_get_pull_review_comments(repo.owner(), repo.name(), pr_number, review_id)
+                    .await?;
+                value["comments"] = serde_json::to_value(review_comments)?;
+            }
+            out.push(value);
+        }
+        return json.print(&out);
+    }
 
     if reviews.is_empty() {
         ftl_println!("msg-pr-review-list-none");
@@ -2300,6 +2395,125 @@ pub async fn view_pr_reviews(
         ftl_println!("msg-pr-review-list-only_stale");
     }
 
+    Ok(())
+}
+
+/// `path:42=body` comments on line 42, `path:40-44=body` on lines 40 to 44.
+/// The path is everything before the last colon ahead of the first `=`.
+fn parse_review_line(spec: &str, old: bool) -> eyre::Result<CreatePullReviewComment> {
+    let invalid = || ftl_eyre!("msg-pr-review-submit-invalid_line", spec);
+    let (location, body) = spec.split_once('=').ok_or_else(invalid)?;
+    let (path, range) = location.rsplit_once(':').ok_or_else(invalid)?;
+    let (start, end) = match range.split_once('-') {
+        Some((start, end)) => (start, end),
+        None => (range, range),
+    };
+    let start = start.parse::<i64>().map_err(|_| invalid())?;
+    let end = end.parse::<i64>().map_err(|_| invalid())?;
+    if path.is_empty() || start < 1 || end < start {
+        return Err(invalid());
+    }
+    Ok(review_comment(path, start, end, old, body))
+}
+
+fn review_comment(path: &str, start: i64, end: i64, old: bool, body: &str) -> CreatePullReviewComment {
+    let (new_position, old_position) = if old { (0, start) } else { (start, 0) };
+    CreatePullReviewComment {
+        body: Some(body.to_owned()),
+        extra_lines_count: Some(end - start),
+        new_position: Some(new_position),
+        old_position: Some(old_position),
+        path: Some(path.to_owned()),
+    }
+}
+
+#[derive(serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ReviewCommentSpec {
+    path: String,
+    line: i64,
+    end_line: Option<i64>,
+    #[serde(default)]
+    side: ReviewSide,
+    body: String,
+}
+
+#[derive(serde::Deserialize, Default, PartialEq)]
+#[serde(rename_all = "lowercase")]
+enum ReviewSide {
+    #[default]
+    New,
+    Old,
+}
+
+fn read_review_comments(path: &std::path::Path) -> eyre::Result<Vec<CreatePullReviewComment>> {
+    let text = read_text(path)?;
+    let specs = serde_json::from_str::<Vec<ReviewCommentSpec>>(&text)
+        .wrap_err_with(|| format!("could not read review comments from {}", path.display()))?;
+    specs
+        .into_iter()
+        .map(|x| {
+            let end = x.end_line.unwrap_or(x.line);
+            if x.line < 1 || end < x.line {
+                eyre::bail!("invalid line range {}-{end} for {}", x.line, x.path);
+            }
+            Ok(review_comment(&x.path, x.line, end, x.side == ReviewSide::Old, &x.body))
+        })
+        .collect()
+}
+
+/// Reads a file, or stdin when the path is `-`.
+fn read_text(path: &std::path::Path) -> eyre::Result<String> {
+    if path.as_os_str() == "-" {
+        let mut text = String::new();
+        std::io::Read::read_to_string(&mut std::io::stdin(), &mut text)?;
+        Ok(text)
+    } else {
+        std::fs::read_to_string(path).wrap_err_with(|| path.display().to_string())
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+async fn submit_pr_review(
+    repo: &RepoName,
+    api: &Forgejo,
+    pr: Option<i64>,
+    event: &str,
+    body: Option<String>,
+    comments: Vec<CreatePullReviewComment>,
+    commit: Option<String>,
+    json: &JsonArgs,
+) -> eyre::Result<()> {
+    let pr = try_get_pr(repo, api, pr).await?;
+    let pr_number = pr.number.ok_or_eyre("pr does not have number")?;
+    let repo = repo_name_from_pr(&pr)?;
+    // Pinning the head the review was written against keeps inline comments on
+    // the lines they were meant for if the branch moves in the meantime.
+    let commit_id = commit.or_else(|| pr.head.as_ref().and_then(|x| x.sha.clone()));
+    let count = comments.len();
+    let review = api
+        .repo_create_pull_review(
+            repo.owner(),
+            repo.name(),
+            pr_number,
+            CreatePullReviewOptions {
+                body,
+                comments: Some(comments),
+                commit_id,
+                event: Some(event.to_owned()),
+            },
+        )
+        .await?;
+    if json.enabled() {
+        return json.print(&review);
+    }
+    ftl_println!(
+        "msg-pr-review-submit-success",
+        event,
+        number = pr_number,
+        comments = count,
+        url = review.html_url.as_ref().map(|x| x.as_str()).unwrap_or_default(),
+    );
     Ok(())
 }
 
@@ -2551,3 +2765,22 @@ fn repo_name_from_pr(pr: &forgejo_api::structs::PullRequest) -> eyre::Result<Rep
 //    }
 //    s
 //}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn review_lines() {
+        let x = parse_review_line("src/a:b.rs:40-44=x = y: z", false).unwrap();
+        assert_eq!(x.path.as_deref(), Some("src/a:b.rs"));
+        assert_eq!((x.new_position, x.old_position), (Some(40), Some(0)));
+        assert_eq!(x.extra_lines_count, Some(4));
+        assert_eq!(x.body.as_deref(), Some("x = y: z"));
+        let x = parse_review_line("a.rs:7=gone", true).unwrap();
+        assert_eq!((x.new_position, x.old_position), (Some(0), Some(7)));
+        assert!(parse_review_line("a.rs=x", false).is_err());
+        assert!(parse_review_line("a.rs:9-3=x", false).is_err());
+        assert!(parse_review_line("a.rs:0=x", false).is_err());
+    }
+}

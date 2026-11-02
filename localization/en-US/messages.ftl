@@ -718,6 +718,35 @@ msg-pr-review-list-comment_header = {STYLE("bold", "bright-cyan")}{$commenter}{S
         [some] (resolved by {$resolver})
     }:
 
+help-cmd-pr-review-submit = Submit a review, optionally with inline comments
+help-cmd-pr-review-submit-long =
+    Submit a review on a pull request: an approval, a change request or a plain comment (the default).
+
+    Inline comments go on lines of the diff, either with --line and --old-line, which can be repeated, or as a JSON file with --comments-file. The review is pinned to the head commit of the pull request unless --commit is given.
+help-arg-pr-review-submit-approve = Approve the pull request
+help-arg-pr-review-submit-request_changes = Request changes
+help-arg-pr-review-submit-comment = Comment without approving or requesting changes (the default)
+help-arg-pr-review-submit-body = The review text
+help-arg-pr-review-submit-body_file = Read the review text from a file (- reads stdin)
+help-arg-pr-review-submit-line = Comment on a line, or a range, of the new version of a file, e.g. src/main.rs:42=Text or src/main.rs:40-44=Text
+help-arg-pr-review-submit-old_line = Like --line, but on the old version of the file, for removed lines
+help-arg-pr-review-submit-comments_file = Read inline comments from a JSON file (- reads stdin)
+help-arg-pr-review-submit-comments_file-long =
+    Read inline comments from a JSON file (- reads stdin), an array of objects like
+    {"{"}"path": "src/main.rs", "line": 40, "end_line": 44, "side": "new", "body": "Text"{"}"}.
+    end_line is optional, and side is "new" (the default) or "old".
+help-arg-pr-review-submit-commit = The commit to review, instead of the head of the pull request
+msg-pr-review-submit-invalid_line = Invalid inline comment, expected PATH:LINE=BODY or PATH:START-END=BODY: {$spec}
+msg-pr-review-submit-success = {$event ->
+        [APPROVED] Approved
+        [REQUEST_CHANGES] Requested changes on
+       *[other] Reviewed
+    } #{$number}{$comments ->
+        [0] {""}
+        [one] {" "}with 1 inline comment
+       *[other] {" "}with {$comments} inline comments
+    }: {$url}
+
 help-cmd-pr-review-request = Request reviewer on a pull request
 help-arg-pr-review-request-reviewers = The usernames of the users to request a review from
 help-arg-pr-review-request-team = The team names to request a review from
