@@ -96,6 +96,35 @@ help-arg-json = Print JSON instead of text. Give a comma-separated list of field
 msg-json-unknown-field = Unknown JSON field {$field}. Available fields: {$available}
 msg-json-diff = --json is not supported for diffs; use `forge pr view diff`
 
+help-cmd-run = View, watch, rerun and cancel Actions runs, and read their logs
+help-cmd-run-list = List recent runs
+help-arg-run-list-status = Only runs with this status
+help-arg-run-list-branch = Only runs on this branch
+help-arg-run-list-event = Only runs triggered by this event, e.g. push or pull_request
+help-arg-run-list-workflow = Only runs of this workflow file, e.g. ci.yml
+help-arg-run-list-commit = Only runs for this commit
+help-arg-run-list-limit = How many runs to list
+help-cmd-run-view = Show a run and its jobs, or their logs
+help-cmd-run-view-long =
+    Show a run and its jobs, or their logs.
+
+    --log prints the log of every step, each under a "=== job / step" header. --log-failed prints only the steps that failed, which is usually what explains a red check.
+help-arg-run-run = The run number shown in the web UI, or a run or job URL
+help-arg-run-job = Only this job, by name or job id
+help-arg-run-view-log = Print the logs of the jobs
+help-arg-run-view-log_failed = Print the logs of the failed steps of failed jobs
+help-cmd-run-watch = Wait for a run to finish; exits nonzero unless it succeeded
+help-arg-run-watch-interval = Seconds between checks
+help-cmd-run-rerun = Rerun a run, its failed jobs or one job
+help-arg-run-rerun-failed = Rerun only the failed and cancelled jobs
+help-cmd-run-cancel = Cancel a run
+msg-run-invalid-ref = Not a run number or run URL: {$run}
+msg-run-not_found = There is no run #{$number}
+msg-run-job-not_found = There is no job {$job}. Jobs: {$jobs}
+msg-run-job-out_of_range = There is no job {$position}, the run has {$count}
+msg-run-rerun-none = There are no failed jobs to rerun
+msg-run-watch-not_success = The run finished with status {$status}
+
 help-cmd-api = Make an authenticated request to the Forgejo API and print the response
 help-arg-api-endpoint = The endpoint, relative to /api/v1/, or a full URL on the same host. {"{"}owner{"}"} and {"{"}repo{"}"} are replaced with the current repo
 help-arg-api-method = The HTTP method. Defaults to GET, or POST when fields or --input are given

@@ -18,6 +18,23 @@ Everything `fj` does still works:
 `forge` doesn't try to replace your usage of `git`, it's meant to work alongside it.
 It handles all the Forgejo-specific things that `git` doesn't.
 
+What `forge` adds:
+
+- `forge api ENDPOINT` makes an authenticated API request, with `gh api`'s
+  flags: `{owner}`/`{repo}` placeholders, `-X`, `-f`/`-F` fields (nested with
+  `key[sub]` and `key[]`), `--input`, `--header`, `--paginate`, `-i`.
+- `--json [FIELDS]` on `pr`/`issue` `view` (and its `comments`, `files`,
+  `commits` subcommands), `list`, `pr status` and `pr review list`.
+- `forge pr review N submit --approve | --request-changes | --comment`, with
+  inline comments: `--line src/main.rs:42=Text`, `--line src/main.rs:40-44=Text`,
+  `--old-line` for removed lines, or a JSON file with `--comments-file`.
+- `forge run list | view | watch | rerun | cancel` for Actions runs. A run is
+  the number shown in the web UI, or a run or job URL as found in a PR's
+  checks. `forge run view N --log-failed` prints only the failed steps' logs
+  (Forgejo 16 or newer).
+- `FORGE_TOKEN` overrides the stored login, like `GH_TOKEN`, so each agent or
+  CI job can act as its own user.
+
 Logins are stored separately from `fj`'s, in `forge`'s own data directory, so
 the two can be installed side by side.
 

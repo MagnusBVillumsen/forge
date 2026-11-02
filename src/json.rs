@@ -19,6 +19,24 @@ impl JsonArgs {
         self.json.is_some()
     }
 
+    /// Like `print`, but drops `omitted` from each object unless a field list
+    /// asks for them.
+    pub fn print_omitting<T: Serialize>(&self, value: &T, omitted: &[&str]) -> eyre::Result<()> {
+        let mut value = serde_json::to_value(value)?;
+        if self.json.as_deref().unwrap_or_default().trim().is_empty() {
+            let objects = match &mut value {
+                Value::Array(items) => items.iter_mut().collect::<Vec<_>>(),
+                other => vec![other],
+            };
+            for object in objects.into_iter().filter_map(Value::as_object_mut) {
+                for key in omitted {
+                    object.remove(*key);
+                }
+            }
+        }
+        self.print(&value)
+    }
+
     /// Prints `value` as JSON, keeping only the requested top-level fields of
     /// each object when a field list was given.
     pub fn print<T: Serialize>(&self, value: &T) -> eyre::Result<()> {

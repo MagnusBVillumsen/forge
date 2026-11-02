@@ -124,7 +124,7 @@ pub enum PrSubcommand {
         #[clap(subcommand)]
         command: Option<ViewCommand>,
     },
-    #[clap(about = h!("cmd-pr-status"))]
+    #[clap(about = h!("cmd-pr-status"), visible_alias = "checks")]
     Status {
         #[clap(help = h!("arg-pr-status-id"))]
         id: Option<IssueId>,

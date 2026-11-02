@@ -20,6 +20,7 @@ mod org;
 mod prs;
 mod release;
 mod repo;
+mod run;
 mod tag;
 mod user;
 mod version;
@@ -66,6 +67,8 @@ pub enum Command {
     Actions(actions::ActionsCommand),
     #[clap(about = h!("cmd-api"))]
     Api(api::ApiCommand),
+    #[clap(about = h!("cmd-run"))]
+    Run(run::RunCommand),
     #[command(name = "whoami")]
     WhoAmI(whoami::WhoAmICommand),
     #[clap(subcommand)]
@@ -88,6 +91,7 @@ impl Command {
             Command::Wiki(subcommand) => subcommand.run(keys, host_name).await?,
             Command::Actions(subcommand) => subcommand.run(keys, host_name).await?,
             Command::Api(command) => command.run(keys, host_name).await?,
+            Command::Run(command) => command.run(keys, host_name).await?,
             Command::WhoAmI(command) => command.run(keys, host_name).await?,
             Command::Auth(subcommand) => subcommand.run(keys, host_name).await?,
             Command::Release(subcommand) => subcommand.run(keys, host_name).await?,
