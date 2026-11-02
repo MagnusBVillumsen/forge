@@ -17,6 +17,7 @@ use futures::stream::{StreamExt, TryStreamExt};
 
 use crate::{
     SpecialRender,
+    json::JsonArgs,
     issues::IssueId,
     localization::AsFluent,
     repo::{RepoArg, RepoInfo, RepoName},
@@ -36,8 +37,11 @@ pub struct PrCommand {
 
 #[derive(Subcommand, Clone, Debug)]
 pub enum PrSubcommand {
-    #[clap(about = h!("cmd-pr-search"))]
+    #[clap(about = h!("cmd-pr-search"), visible_alias = "list")]
     Search {
+        #[clap(flatten)]
+        json: JsonArgs,
+
         query: Option<String>,
 
         #[clap(long, short)]
@@ -114,6 +118,8 @@ pub enum PrSubcommand {
     View {
         #[clap(help = h!("arg-pr-view-id"))]
         id: Option<IssueId>,
+        #[clap(flatten)]
+        json: JsonArgs,
         #[clap(subcommand)]
         command: Option<ViewCommand>,
     },
@@ -124,6 +130,8 @@ pub enum PrSubcommand {
         #[clap(help = h!("arg-pr-status-wait"))]
         #[clap(long)]
         wait: bool,
+        #[clap(flatten)]
+        json: JsonArgs,
     },
     #[clap(about = h!("cmd-pr-checkout"))]
     Checkout {
@@ -501,7 +509,10 @@ impl PrCommand {
                 )
                 .await?
             }
-            View { id, command } => {
+            View { id, json, command } if json.enabled() => {
+                view_pr_json(repo, &api, id.map(|id| id.number), command, &json).await?
+            }
+            View { id, command, .. } => {
                 let id = id.map(|id| id.number);
                 match command.unwrap_or(ViewCommand::Body) {
                     ViewCommand::Body => view_pr(repo, &api, id).await?,
@@ -527,8 +538,11 @@ impl PrCommand {
                     }
                 }
             }
-            Status { id, wait } => view_pr_status(repo, &api, id.map(|id| id.number), wait).await?,
+            Status { id, wait, json } => {
+                view_pr_status(repo, &api, id.map(|id| id.number), wait, &json).await?
+            }
             Search {
+                json,
                 query,
                 labels,
                 creator,
@@ -542,6 +556,7 @@ impl PrCommand {
                 view_prs(
                     repo,
                     &api,
+                    &json,
                     query,
                     labels,
                     creator,
@@ -868,6 +883,57 @@ pub async fn view_pr(repo: &RepoName, api: &Forgejo, id: Option<i64>) -> eyre::R
     Ok(())
 }
 
+async fn view_pr_json(
+    repo: &RepoName,
+    api: &Forgejo,
+    id: Option<i64>,
+    command: Option<ViewCommand>,
+    json: &JsonArgs,
+) -> eyre::Result<()> {
+    let pr = try_get_pr(repo, api, id).await?;
+    let number = pr.number.ok_or_eyre("pr does not have number")?;
+    let repo = repo_name_from_pr(&pr)?;
+    match command.unwrap_or(ViewCommand::Body) {
+        ViewCommand::Body => json.print(&pr),
+        ViewCommand::Labels => json.print(&pr.labels.unwrap_or_default()),
+        ViewCommand::Assignees => json.print(&pr.assignees.unwrap_or_default()),
+        ViewCommand::Comments => {
+            json.print(&crate::issues::get_comments(&repo, api, number).await?)
+        }
+        ViewCommand::Comment { idx } => {
+            let comments = crate::issues::get_comments(&repo, api, number).await?;
+            let comment = comments
+                .get(idx)
+                .ok_or_else(|| eyre::eyre!("comment {idx} doesn't exist"))?;
+            json.print(comment)
+        }
+        ViewCommand::Files => {
+            let files = api
+                .repo_get_pull_request_files(
+                    repo.owner(),
+                    repo.name(),
+                    number,
+                    RepoGetPullRequestFilesQuery::default(),
+                )
+                .all()
+                .await?;
+            json.print(&files)
+        }
+        ViewCommand::Commits { .. } => {
+            let query = RepoGetPullRequestCommitsQuery {
+                files: Some(false),
+                ..Default::default()
+            };
+            let commits = api
+                .repo_get_pull_request_commits(repo.owner(), repo.name(), number, query)
+                .all()
+                .await?;
+            json.print(&commits)
+        }
+        ViewCommand::Diff { .. } => ftl_bail!("msg-json-diff"),
+    }
+}
+
 async fn view_pr_labels(repo: &RepoName, api: &Forgejo, pr: Option<i64>) -> eyre::Result<()> {
     let pr = try_get_pr(repo, api, pr).await?;
     let labels = pr.labels.as_deref().unwrap_or_default();
@@ -880,7 +946,18 @@ async fn view_pr_status(
     api: &Forgejo,
     id: Option<i64>,
     wait: bool,
+    json: &JsonArgs,
 ) -> eyre::Result<()> {
+    if json.enabled() {
+        let mut wait_duration = 5.0;
+        let mut pr_status = get_pr_status(repo, api, id).await?;
+        while wait && !pr_status.finished() {
+            tokio::time::sleep(std::time::Duration::from_secs_f64(wait_duration)).await;
+            wait_duration *= 1.5;
+            pr_status = get_pr_status(repo, api, id).await?;
+        }
+        return json.print(&pr_status.to_json()?);
+    }
     if wait {
         let SpecialRender { fancy, .. } = *crate::special_render();
         let mut wait_duration = 5.0;
@@ -896,20 +973,14 @@ async fn view_pr_status(
                 print!(".");
                 std::io::stdout().flush()?;
             }
-            match &pr_status {
-                PrStatus::Merged { .. } => break pr_status,
-                PrStatus::Open {
-                    commit_statuses, ..
-                } => {
-                    let all_finished = commit_statuses
-                        .iter()
-                        .flat_map(|x| x.status.as_ref())
-                        .all(|state| *state != forgejo_api::structs::CommitStatusState::Pending);
-                    if all_finished {
-                        break pr_status;
-                    }
-                    prev_statuses_len = commit_statuses.len() + 2;
-                }
+            if pr_status.finished() {
+                break pr_status;
+            }
+            if let PrStatus::Open {
+                commit_statuses, ..
+            } = &pr_status
+            {
+                prev_statuses_len = commit_statuses.len() + 2;
             }
             tokio::time::sleep(std::time::Duration::from_secs_f64(wait_duration)).await;
             wait_duration *= 1.5;
@@ -932,6 +1003,50 @@ enum PrStatus {
         pr: forgejo_api::structs::PullRequest,
         commit_statuses: Vec<forgejo_api::structs::CommitStatus>,
     },
+}
+
+impl PrStatus {
+    fn finished(&self) -> bool {
+        match self {
+            PrStatus::Merged { .. } => true,
+            PrStatus::Open {
+                commit_statuses, ..
+            } => commit_statuses
+                .iter()
+                .flat_map(|x| x.status.as_ref())
+                .all(|state| *state != forgejo_api::structs::CommitStatusState::Pending),
+        }
+    }
+
+    fn to_json(&self) -> eyre::Result<serde_json::Value> {
+        let (pr, statuses) = match self {
+            PrStatus::Merged { pr } => (pr, &[][..]),
+            PrStatus::Open {
+                pr,
+                commit_statuses,
+            } => (pr, &commit_statuses[..]),
+        };
+        let mut pr_json = serde_json::to_value(pr)?;
+        let state = match pr.state {
+            _ if pr.merged == Some(true) => "merged",
+            Some(StateType::Open) if pr.draft == Some(true) => "draft",
+            Some(StateType::Open) if pr.title.as_deref().is_some_and(|s| s.starts_with("WIP:")) => {
+                "draft"
+            }
+            Some(StateType::Open) => "open",
+            Some(StateType::Closed) => "closed",
+            None => "unknown",
+        };
+        Ok(serde_json::json!({
+            "number": pr.number,
+            "state": state,
+            "mergeable": pr.mergeable,
+            "head_sha": pr.head.as_ref().and_then(|x| x.sha.as_deref()),
+            "merged_by": pr.merged_by.as_ref().and_then(|x| x.login.as_deref()),
+            "merged_at": pr_json["merged_at"].take(),
+            "statuses": statuses,
+        }))
+    }
 }
 
 async fn get_pr_status(repo: &RepoName, api: &Forgejo, id: Option<i64>) -> eyre::Result<PrStatus> {
@@ -1859,6 +1974,7 @@ async fn checkout_pr(
 async fn view_prs(
     repo: &RepoName,
     api: &Forgejo,
+    json: &JsonArgs,
     query_str: Option<String>,
     labels: Option<String>,
     creator: Option<String>,
@@ -1883,6 +1999,23 @@ async fn view_prs(
         mentioned_by: None,
         sort: None,
     };
+    if json.enabled() {
+        let prs = match page {
+            Some(page) => {
+                api.issue_list_issues(repo.owner(), repo.name(), query)
+                    .page_size(SEARCH_PAGE_SIZE)
+                    .page(page.get())
+                    .await?
+                    .1
+            }
+            None => {
+                api.issue_list_issues(repo.owner(), repo.name(), query)
+                    .all()
+                    .await?
+            }
+        };
+        return json.print(&prs);
+    }
     let prs = if let Some(page) = page {
         let page = page.get();
         let (header, prs) = api

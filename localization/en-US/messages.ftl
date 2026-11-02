@@ -92,6 +92,10 @@ help-arg-actions-secrets-create-data = The data to save into the secret
 help-cmd-actions-secrets-delete = Delete an actions secret
 help-arg-actions-secrets-delete-name = The secret to delete
 
+help-arg-json = Print JSON instead of text. Give a comma-separated list of fields to keep only those
+msg-json-unknown-field = Unknown JSON field {$field}. Available fields: {$available}
+msg-json-diff = --json is not supported for diffs; use `forge pr view diff`
+
 help-cmd-api = Make an authenticated request to the Forgejo API and print the response
 help-arg-api-endpoint = The endpoint, relative to /api/v1/, or a full URL on the same host. {"{"}owner{"}"} and {"{"}repo{"}"} are replaced with the current repo
 help-arg-api-method = The HTTP method. Defaults to GET, or POST when fields or --input are given

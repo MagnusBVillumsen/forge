@@ -12,6 +12,7 @@ use forgejo_api::structs::{
 use forgejo_api::{CountHeader, Forgejo};
 
 use crate::repo::{RepoArg, RepoInfo, RepoName};
+use crate::json::JsonArgs;
 use crate::{ftl_bail, ftl_ensure, ftl_eprintln, ftl_eyre, ftl_println, h, lh, milestones};
 
 pub mod template;
@@ -101,8 +102,11 @@ pub enum IssueSubcommand {
         #[clap(long, short)]
         with_msg: Option<Option<String>>,
     },
-    #[clap(about = h!("cmd-issue-search"))]
+    #[clap(about = h!("cmd-issue-search"), visible_alias = "list")]
     Search {
+        #[clap(flatten)]
+        json: JsonArgs,
+
         #[clap(help = h!("arg-issue-search-repo"))]
         #[clap(long, short)]
         repo: Option<RepoArg>,
@@ -138,6 +142,8 @@ pub enum IssueSubcommand {
     View {
         #[clap(help = h!("arg-issue-view-issue"))]
         id: IssueId,
+        #[clap(flatten)]
+        json: JsonArgs,
         #[clap(subcommand)]
         command: Option<ViewCommand>,
     },
@@ -355,13 +361,17 @@ impl IssueCommand {
                 )
                 .await?
             }
-            View { id, command } => match command.unwrap_or(ViewCommand::Body) {
+            View { id, json, command } if json.enabled() => {
+                view_issue_json(repo, &api, id.number, command, &json).await?
+            }
+            View { id, command, .. } => match command.unwrap_or(ViewCommand::Body) {
                 ViewCommand::Body => view_issue(repo, &api, id.number).await?,
                 ViewCommand::Comment { idx } => view_comment(repo, &api, id.number, idx).await?,
                 ViewCommand::Comments => view_comments(repo, &api, id.number).await?,
                 ViewCommand::Assignees => view_assignees(repo, &api, id.number).await?,
             },
             Search {
+                json,
                 repo: _,
                 query,
                 labels,
@@ -375,6 +385,7 @@ impl IssueCommand {
                 view_issues(
                     repo,
                     &api,
+                    &json,
                     query,
                     labels,
                     creator,
@@ -704,6 +715,7 @@ pub async fn view_issue(repo: &RepoName, api: &Forgejo, number: i64) -> eyre::Re
 async fn view_issues(
     repo: &RepoName,
     api: &Forgejo,
+    json: &JsonArgs,
     query_str: Option<String>,
     labels: Option<String>,
     creator: Option<String>,
@@ -729,6 +741,23 @@ async fn view_issues(
         mentioned_by: None,
         sort: None,
     };
+    if json.enabled() {
+        let issues = match page {
+            Some(page) => {
+                api.issue_list_issues(repo.owner(), repo.name(), query)
+                    .page_size(PAGE_SIZE)
+                    .page(page.get())
+                    .await?
+                    .1
+            }
+            None => {
+                api.issue_list_issues(repo.owner(), repo.name(), query)
+                    .all()
+                    .await?
+            }
+        };
+        return json.print(&issues);
+    }
     let issues = if let Some(page) = page {
         let page = page.get();
         let (header, issues) = api
@@ -844,6 +873,43 @@ pub async fn view_issue_templates(repo: &RepoName, api: &Forgejo) -> eyre::Resul
         ftl_eprintln!("msg-issue-templates-blank_not_allowed");
     }
     Ok(())
+}
+
+async fn view_issue_json(
+    repo: &RepoName,
+    api: &Forgejo,
+    number: i64,
+    command: Option<ViewCommand>,
+    json: &JsonArgs,
+) -> eyre::Result<()> {
+    match command.unwrap_or(ViewCommand::Body) {
+        ViewCommand::Body => {
+            json.print(&api.issue_get_issue(repo.owner(), repo.name(), number).await?)
+        }
+        ViewCommand::Assignees => {
+            let issue = api.issue_get_issue(repo.owner(), repo.name(), number).await?;
+            json.print(&issue.assignees.unwrap_or_default())
+        }
+        ViewCommand::Comments => json.print(&get_comments(repo, api, number).await?),
+        ViewCommand::Comment { idx } => {
+            let comments = get_comments(repo, api, number).await?;
+            let comment = comments
+                .get(idx)
+                .ok_or_else(|| eyre!("comment {idx} doesn't exist"))?;
+            json.print(comment)
+        }
+    }
+}
+
+pub async fn get_comments(repo: &RepoName, api: &Forgejo, id: i64) -> eyre::Result<Vec<Comment>> {
+    let query = IssueGetCommentsQuery {
+        since: None,
+        before: None,
+    };
+    let (_, comments) = api
+        .issue_get_comments(repo.owner(), repo.name(), id, query)
+        .await?;
+    Ok(comments)
 }
 
 pub async fn view_comment(repo: &RepoName, api: &Forgejo, id: i64, idx: usize) -> eyre::Result<()> {

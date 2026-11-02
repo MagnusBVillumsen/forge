@@ -14,6 +14,7 @@ mod api;
 mod auth;
 mod completion;
 mod issues;
+mod json;
 mod milestones;
 mod org;
 mod prs;
