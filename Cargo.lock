@@ -638,6 +638,7 @@ dependencies = [
  "open",
  "rand",
  "regex",
+ "reqwest",
  "semver",
  "serde",
  "serde-saphyr",

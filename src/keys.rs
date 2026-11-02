@@ -94,6 +94,10 @@ impl KeyInfo {
     }
 
     pub async fn get_api(&mut self, url: &Url) -> eyre::Result<Forgejo> {
+        if let Some(token) = env_token() {
+            return Forgejo::with_user_agent(Auth::Token(&token), url.clone(), crate::USER_AGENT)
+                .map_err(Into::into);
+        }
         match self.get_login(url) {
             Some(login) => {
                 let was_refreshed = login.refresh(url).await?;
@@ -106,6 +110,23 @@ impl KeyInfo {
             None => Forgejo::with_user_agent(Auth::None, url.clone(), crate::USER_AGENT)
                 .map_err(Into::into),
         }
+    }
+
+    /// The token `forge` would authenticate with, refreshed first if it is an
+    /// expired OAuth token.
+    pub async fn get_token(&mut self, url: &Url) -> eyre::Result<Option<String>> {
+        if let Some(token) = env_token() {
+            return Ok(Some(token));
+        }
+        let Some(login) = self.get_login(url) else {
+            return Ok(None);
+        };
+        let was_refreshed = login.refresh(url).await?;
+        let token = login.token().to_owned();
+        if was_refreshed {
+            self.save().await?;
+        }
+        Ok(Some(token))
     }
 
     pub fn deref_alias(&self, url: url::Url) -> url::Url {
@@ -137,7 +158,20 @@ pub enum LoginInfo {
     },
 }
 
+/// `FORGE_TOKEN` overrides the stored login on every host, like `GH_TOKEN`
+/// does for `gh`, so each agent or CI job can act as its own user.
+fn env_token() -> Option<String> {
+    std::env::var("FORGE_TOKEN").ok().filter(|x| !x.is_empty())
+}
+
 impl LoginInfo {
+    fn token(&self) -> &str {
+        match self {
+            LoginInfo::Application { token } => token,
+            LoginInfo::OAuth { token, .. } => token,
+        }
+    }
+
     async fn refresh(&mut self, url: &Url) -> eyre::Result<bool> {
         if let LoginInfo::OAuth {
             token,

@@ -10,6 +10,7 @@ mod keys;
 use keys::*;
 
 mod actions;
+mod api;
 mod auth;
 mod completion;
 mod issues;
@@ -62,6 +63,8 @@ pub enum Command {
     Milestone(milestones::MilestoneCommand),
     Wiki(wiki::WikiCommand),
     Actions(actions::ActionsCommand),
+    #[clap(about = h!("cmd-api"))]
+    Api(api::ApiCommand),
     #[command(name = "whoami")]
     WhoAmI(whoami::WhoAmICommand),
     #[clap(subcommand)]
@@ -83,6 +86,7 @@ impl Command {
             Command::Milestone(subcommand) => subcommand.run(keys, host_name).await?,
             Command::Wiki(subcommand) => subcommand.run(keys, host_name).await?,
             Command::Actions(subcommand) => subcommand.run(keys, host_name).await?,
+            Command::Api(command) => command.run(keys, host_name).await?,
             Command::WhoAmI(command) => command.run(keys, host_name).await?,
             Command::Auth(subcommand) => subcommand.run(keys, host_name).await?,
             Command::Release(subcommand) => subcommand.run(keys, host_name).await?,

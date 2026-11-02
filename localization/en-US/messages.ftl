@@ -92,6 +92,25 @@ help-arg-actions-secrets-create-data = The data to save into the secret
 help-cmd-actions-secrets-delete = Delete an actions secret
 help-arg-actions-secrets-delete-name = The secret to delete
 
+help-cmd-api = Make an authenticated request to the Forgejo API and print the response
+help-arg-api-endpoint = The endpoint, relative to /api/v1/, or a full URL on the same host. {"{"}owner{"}"} and {"{"}repo{"}"} are replaced with the current repo
+help-arg-api-method = The HTTP method. Defaults to GET, or POST when fields or --input are given
+help-arg-api-field = Add a typed field: true, false, null and integers become JSON, @file reads a file (@- reads stdin). key[sub] nests an object, key[] appends to an array
+help-arg-api-raw-field = Add a field whose value is always a string
+help-arg-api-header = Add a request header
+help-arg-api-input = Send this file as the request body (- reads stdin). Fields then go in the query string
+help-arg-api-paginate = Follow every page of the result and print one combined JSON array
+help-arg-api-include = Print the response status and headers before the body
+help-arg-api-silent = Do not print the response body
+msg-api-invalid-method = Invalid HTTP method: {$method}
+msg-api-invalid-header = Invalid header, expected KEY:VALUE: {$header}
+msg-api-invalid-field = Invalid field, expected KEY=VALUE: {$field}
+msg-api-field-conflict = Field {$field} conflicts with an earlier field
+msg-api-nested-query = Field {$field} is an object or a nested array, which can't go in a query string
+msg-api-no-repo = The endpoint uses {"{"}owner{"}"} or {"{"}repo{"}"}, but no repo was found. Try specifying it with `--repo`
+msg-api-other-host = Refusing to send the token to a host other than {$host}
+msg-api-status = HTTP {$status}
+
 help-cmd-org-list = List all organizations
 help-arg-org-list-page = Which page of the results to view
 help-arg-org-list-only_member_of = Only list organizations you are a member of
