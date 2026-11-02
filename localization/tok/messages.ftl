@@ -3,7 +3,7 @@ msg-auth-login-oauth_unsupported =
     ilo FJ sina li ken ala kepeken nasin `login` lon ma { $host_domain }
 
     o lukin e lipu { $applications_url }
-    o pali e nimi len ilo, o pana e ona tawa mi kepeken `fj auth add-key`
+    o pali e nimi len ilo, o pana e ona tawa mi kepeken `forge auth add-key`
 msg-auth-login-canceled = sina kama ala lon sijelo
 msg-auth-login-browser_success = sina kama lon sijelo! o weka lipu ni, o tawa ilo toki sina
 msg-auth-login-browser_failure = pakala li lon la sina ken ala kama lon sijelo
@@ -259,7 +259,7 @@ msg-version-update_check-behind =
     sin pi ilo FJ li lon: nanpa { $new_version }
     o kama jo e ona lon lipu { $url }
 msg-version-update_check-current = sin pi ilo FJ li lon ala. wawa a!
-msg-version-update_check-hint = sina ken alasa e sin pi ilo FJ kepeken nimi`fj version --check`
+msg-version-update_check-hint = sina ken alasa e sin pi ilo FJ kepeken nimi`forge version --check`
 msg-release-asset-delete-success = ijo { $asset } li weka tan pana { $release }
 msg-release-asset-create-success = ijo { $asset } li kama lon pana { $release }
 msg-release-view-header =
@@ -479,7 +479,7 @@ help-cmd-auth-add_token = o pana e nimi len ilo pi ma wan
 help-cmd-auth-add_token-long =
     o pana e nimi len ilo pi ma wan
 
-    sina ken ala kepeken `fj auth login` la, o kepeken ni
+    sina ken ala kepeken `forge auth login` la, o kepeken ni
 help-arg-auth-add_token-token = o pana e nimi len ilo seme
 help-cmd-auth-list = o lukin e sijelo sina ale
 help-arg-actions-tasks-page = o lukin e kulupu alasa nanpa seme

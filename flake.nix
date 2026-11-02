@@ -16,9 +16,9 @@
         pkgs = import nixpkgs { inherit system; };
       in
       rec {
-        packages.forgejo-cli = pkgs.rustPlatform.buildRustPackage {
-          pname = "forgejo-cli";
-          version = "0.8.0-dev";
+        packages.forge = pkgs.rustPlatform.buildRustPackage {
+          pname = "forge";
+          version = "0.1.0-dev";
           src = pkgs.lib.cleanSource ./.;
 
           cargoLock.lockFile = ./Cargo.lock;
@@ -31,16 +31,16 @@
 
           postInstall = ''
             export HOME=$(mktemp -d)
-            installShellCompletion --cmd fj \
-              --bash <($out/bin/fj completion bash) \
-              --fish <($out/bin/fj completion fish) \
-              --zsh <($out/bin/fj completion zsh) \
-              --nushell <($out/bin/fj completion nushell)
+            installShellCompletion --cmd forge \
+              --bash <($out/bin/forge completion bash) \
+              --fish <($out/bin/forge completion fish) \
+              --zsh <($out/bin/forge completion zsh) \
+              --nushell <($out/bin/forge completion nushell)
           '';
 
           meta = with pkgs.lib; {
-            description = "CLI tool for Forgejo";
-            homepage = "https://codeberg.org/forgejo-contrib/forgejo-cli/";
+            description = "CLI tool for Forgejo, with gh-style output for scripts and agents";
+            homepage = "https://github.com/MagnusBVillumsen/forge";
             license = with licenses; [
               asl20 # or
               mit
@@ -52,7 +52,7 @@
           };
         };
 
-        packages.default = packages.forgejo-cli;
+        packages.default = packages.forge;
 
         devShells.default = pkgs.mkShell {
           inputsFrom = [ packages.default ];

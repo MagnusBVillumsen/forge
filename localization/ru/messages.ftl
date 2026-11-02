@@ -73,10 +73,10 @@ msg-org-team-view-perms-packages = Пакеты
        *[no] —
     }
 msg-auth-login-oauth_unsupported =
-    Ваша версия fj не поддерживает `login` для { $host_domain }
+    Ваша версия forge не поддерживает `login` для { $host_domain }
 
     Создайте токен по ссылке { $applications_url }
-    и используйте его, чтобы войти с `fj auth add-key`
+    и используйте его, чтобы войти с `forge auth add-key`
 msg-auth_logout-success = выполнен выход из { $host }
 msg-auth_logout-already_signed_out = вход не выполнен в { $host }
 msg-whoami = выполнен вход в { $name }@{ $host }
@@ -123,7 +123,7 @@ help-cmd-auth-add_token = Добавить токен приложения дл�
 help-cmd-auth-add_token-long =
     Добавить токен приложения для сервера
 
-    Используйте, если `fj auth login` не работает.
+    Используйте, если `forge auth login` не работает.
 help-arg-auth-add_token-token = Добавляемый ключ. Если не указан, будет прочитан из стд. ввода
 help-cmd-auth-list = Список всех серверов, на которых выполнен вход
 help-cmd-actions-secrets = Список и управление секретами

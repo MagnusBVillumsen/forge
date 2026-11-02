@@ -1,9 +1,9 @@
 msg-whoami = actuellement connecté en tant que { $name }@{ $host }
 msg-auth-login-oauth_unsupported =
-    Votre installation de fj be supporte pas `login` pour { $host_domain }
+    Votre installation de forge be supporte pas `login` pour { $host_domain }
 
     Veuillez visiter { $applications_url }
-    pour créer un jeton et utilisez pour vous connecter avec `fj auth add-key`
+    pour créer un jeton et utilisez pour vous connecter avec `forge auth add-key`
 msg-auth-login-canceled = Connexion annulée
 msg-auth-login-browser_success = Authentifié ! Vous pouvez désormais fermer cet onglet et retourner à votre terminal.
 msg-auth-login-browser_failure = L’authentification a échoué

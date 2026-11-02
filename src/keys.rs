@@ -47,7 +47,7 @@ impl KeyInfo {
     }
 
     pub async fn load() -> eyre::Result<Self> {
-        let path = directories::ProjectDirs::from("", "forgejo-cli", "forgejo-cli")
+        let path = directories::ProjectDirs::from("", "", "forge")
             .ok_or_else(|| ftl_eyre!("msg-project-dir-not-found"))?
             .data_dir()
             .join("keys.json");
@@ -64,7 +64,7 @@ impl KeyInfo {
 
     pub async fn save(&self) -> eyre::Result<()> {
         let json = serde_json::to_vec_pretty(self)?;
-        let dirs = directories::ProjectDirs::from("", "forgejo-cli", "forgejo-cli")
+        let dirs = directories::ProjectDirs::from("", "", "forge")
             .ok_or_else(|| ftl_eyre!("msg-project-dir-not-found"))?;
         let path = dirs.data_dir();
 

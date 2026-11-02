@@ -5,10 +5,10 @@
     }
 msg-whoami = Attualmente connesso come { $name }@{ $host }
 msg-auth-login-oauth_unsupported =
-    La tua installazione di fj non supporta `login` per { $host_domain }
+    La tua installazione di forge non supporta `login` per { $host_domain }
 
     Perfavore visita { $applications_url }
-    per creare un token,e usalo per accedere con `fj auth add-key`
+    per creare un token,e usalo per accedere con `forge auth add-key`
 msg-auth-login-canceled = Accesso annullato
 msg-auth-login-browser_success = Autenticato! Chiudi questa scheda e torna al tuo terminale.
 msg-auth-login-browser_failure = Autenticazione non riuscita

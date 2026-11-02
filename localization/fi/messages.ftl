@@ -228,7 +228,7 @@ msg-release-asset-create-success = Lisätty liite `{ $asset }` julkaisuun { $rel
 msg-release-asset-delete-success = Poistettu liite `{ $asset }` julkaisusta { $release }
 msg-tag-create-success = luotu tagi { $name }
 msg-tag-delete-success = poistettu tagi { $name }
-msg-version-update_check-hint = Tarkista uusi versio komennolla `fj version --check`
+msg-version-update_check-hint = Tarkista uusi versio komennolla `forge version --check`
 msg-version-update_check-current = Ajan tasalla!
 msg-version-update_check-behind =
     Uusi versio saatavilla: { $new_version }

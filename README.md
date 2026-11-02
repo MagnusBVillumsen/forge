@@ -1,13 +1,12 @@
-## `fj`, a CLI client for Forgejo
+## `forge`, a Forgejo CLI for scripts and agents
 
-[<img src="https://repology.org/badge/vertical-allrepos/forgejo-cli.svg" alt="Packaging status" align="right">](https://repology.org/project/forgejo-cli/versions)
+`forge` is a fork of [forgejo-cli (`fj`)](https://codeberg.org/forgejo-contrib/forgejo-cli)
+that aims to cover what people reach for `gh` to do: machine-readable output,
+reviews with inline comments, CI logs and raw API calls. It is not affiliated
+with the forgejo-cli project or with Forgejo; please report problems with
+`forge` here, not upstream.
 
-... akin to `gh`, `glab`, or `tea`!
-
-[![Matrix chat badge](https://img.shields.io/badge/chat-on_matrix-brightgreen)](https://matrix.to/#/#fj-cli:cartoon-aa.xyz)
-[![Liberapay receiving badge](https://img.shields.io/liberapay/receives/forgejo-cli)](https://liberapay.com/forgejo-cli/)
-
-You can...
+Everything `fj` does still works:
 
 - Open, edit, comment on, close issues
 - Create and merge pull requests
@@ -16,27 +15,33 @@ You can...
 - Manage organizations and teams
 - Publish new releases
 
-all from the command line! Check out [the wiki](https://codeberg.org/forgejo-contrib/forgejo-cli/wiki) for more details and explanations.
-
-`fj` doesn't try to replace your usage of `git`, it's meant to work alongside it. 
+`forge` doesn't try to replace your usage of `git`, it's meant to work alongside it.
 It handles all the Forgejo-specific things that `git` doesn't.
 
-[Matrix Chat](https://matrix.to/#/#forgejo-cli:cartoon-aa.xyz)
+Logins are stored separately from `fj`'s, in `forge`'s own data directory, so
+the two can be installed side by side.
 
 ### Installation
 
-Pre-built binaries are available for `x86_64` Windows and `x86_64` & `aarch64` Linux (GNU) on the
-[releases tab](https://codeberg.org/forgejo-contrib/forgejo-cli/releases/latest).
+With Nix:
 
-See [the wiki page on installation](https://codeberg.org/forgejo-contrib/forgejo-cli/wiki/Installation) for more options.
+```sh
+nix run github:MagnusBVillumsen/forge
+```
+
+From source:
+
+```sh
+cargo install --git https://github.com/MagnusBVillumsen/forge
+```
 
 ### Licensing
 
 This project is licensed under either
 [Apache License Version 2.0](LICENSE-APACHE) or [MIT License](LICENSE-MIT)
-at your option.
+at your option, like forgejo-cli, which it is derived from. Copyright in the
+original code remains with the forgejo-cli developers.
 
 Unless you explicitly state otherwise, any contribution intentionally submitted
 for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
 dual licensed as above, without any additional terms or conditions.
-

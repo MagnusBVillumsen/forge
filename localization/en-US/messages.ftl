@@ -22,10 +22,10 @@ help-cmd-auth-login-long =
 
     Opens an auth page in your browser
 msg-auth-login-oauth_unsupported =
-  Your installation of fj doesn't support `login` for {$host_domain}
+  Your installation of forge doesn't support `login` for {$host_domain}
 
   Please visit {$applications_url}
-  to create a token, and use it to log in with `fj auth add-key`
+  to create a token, and use it to log in with `forge auth add-key`
 msg-auth-login-canceled = Login canceled
 msg-auth-login-browser_success = Authenticated! Close this tab and head back to your terminal.
 msg-auth-login-browser_failure = Failed to authenticate.
@@ -45,7 +45,7 @@ help-cmd-auth-add_token = Add an application token for an instance
 help-cmd-auth-add_token-long =
     Add an application token for an instance
 
-    Use this if `fj auth login` doesn't work.
+    Use this if `forge auth login` doesn't work.
 help-arg-auth-add_token-token = The key to add. If not present, the key will be read in from stdin
 msg-auth-add_token-prompt = new key:
 msg-auth-add_token-already_exists = key for {$host} already exists
@@ -1519,7 +1519,7 @@ help-cmd-tag-list = List all the tags on a repo
 help-cmd-tag-view = View a tag's info
 
 help-arg-version-check = Checks for updates
-msg-version-update_check-hint = Check for a new version with `fj version --check`
+msg-version-update_check-hint = Check for a new version with `forge version --check`
 msg-version-update_check-current = Up to date!
 msg-version-update_check-behind =
     New version available: {$new_version}
@@ -1547,13 +1547,13 @@ help-arg-repo-watch_status-list = List all watched repos instead of checking sta
 
 help-arg-cwd = Sets the working directory to <CWD>
 
-msg-project-dir-not-found = Could not find project directory for fj
+msg-project-dir-not-found = Could not find project directory for forge
 msg-old-key-file-read =
     Note: Reading from the keys file in the old location.
         That location is deprecated. The keys file will be saved to the new location.
 msg-save-migrated-key-file-fail =
     {STYLE("bold", "yellow")}Could not migrate key file to the new location!
-    Please ensure, fj can write to {$path}. The old file has not been modified.{STYLE("reset")}
+    Please ensure, forge can write to {$path}. The old file has not been modified.{STYLE("reset")}
 
 help-cmd-milestone-search = Search for milestones
 help-arg-milestone-search-state = Filter milestones by state

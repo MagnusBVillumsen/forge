@@ -1,10 +1,10 @@
 [package]
-name = "forgejo-cli"
-version = "0.8.0-dev"
+name = "forge"
+version = "0.1.0-dev"
 edition = "2024"
 license = "Apache-2.0 OR MIT"
-repository = "https://codeberg.org/forgejo-contrib/forgejo-cli/"
-description = "CLI tool for Forgejo"
+repository = "https://github.com/MagnusBVillumsen/forge"
+description = "CLI tool for Forgejo, with gh-style output for scripts and agents"
 keywords = ["cli", "forgejo"]
 categories = ["command-line-utilities", "development-tools"]
 
@@ -18,7 +18,7 @@ bin-dir = "{ bin }{ binary-ext }"
 pkg-fmt = "zip"
 
 [[bin]]
-name = "fj"
+name = "forge"
 path = "src/main.rs"
 
 [features]

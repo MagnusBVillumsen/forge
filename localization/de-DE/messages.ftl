@@ -5,10 +5,10 @@
     }
 msg-whoami = Momentan angemeldet als: { $name }@{ $host }
 msg-auth-login-oauth_unsupported =
-    Diese Installation von fj unterstützt `login` für { $host_domain } nicht.
+    Diese Installation von forge unterstützt `login` für { $host_domain } nicht.
 
     Bitte besuchen Sie { $applications_url },
-    um einen Token zu erstellen, und verwenden Sie diesen mit `fj auth add-key`, um sich anzumelden.
+    um einen Token zu erstellen, und verwenden Sie diesen mit `forge auth add-key`, um sich anzumelden.
 msg-auth-login-canceled = Anmeldung abgebrochen
 msg-auth-login-browser_success = Authentifiziert! Schließen Sie diesen Tab und gehen sie zurück zu Ihrem Terminal.
 msg-auth-login-browser_failure = Authentifikation fehlgeschlagen.
@@ -617,7 +617,7 @@ msg-release-asset-download-success =
     }
 msg-tag-create-success = Tag { $name } erstellt
 msg-tag-delete-success = Tag { $name } gelöscht
-msg-version-update_check-hint = Prüfen Sie mit `fj version --check` auf eine neue Version
+msg-version-update_check-hint = Prüfen Sie mit `forge version --check` auf eine neue Version
 msg-version-update_check-current = Neuste Version!
 msg-version-update_check-behind =
     Neue Version verfügbar: { $new_version }
@@ -637,7 +637,7 @@ help-cmd-auth-add_token = Fügt ein Anwendungstoken für eine Instanz hinzu
 help-cmd-auth-add_token-long =
     Fügt ein Anwendungstoken für eine Instanz hinzu
 
-    Verwenden sie diese Option, wenn `fj auth login` nicht funktionieren sollte.
+    Verwenden sie diese Option, wenn `forge auth login` nicht funktionieren sollte.
 help-arg-auth-add_token-token = Der Schlüssel, der hinzugefügt werden soll. Ist dieser nicht vorhanden, wird er aus der Standardeingabe gelesen
 help-cmd-auth-list = Zählt alle Instanzen auf, auf denen sie aktuell angemeldet sind
 help-cmd-actions-variables-list = Zählt die Variablen auf

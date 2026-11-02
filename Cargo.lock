@@ -614,29 +614,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "00b0228411908ca8685dba7fc2cdd70ec9990a6e753e89b6ac91a84c40fbaf4b"
 
 [[package]]
-name = "forgejo-api"
-version = "0.12.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1597f08c98eed3f55fedcfeee8b005f9e617dab3c61393a2d8ce437181ad5d0b"
-dependencies = [
- "base64ct",
- "bytes",
- "futures",
- "reqwest",
- "serde",
- "serde_json",
- "soft_assert",
- "thiserror",
- "time",
- "tokio",
- "url",
- "urlencoding",
- "zeroize",
-]
-
-[[package]]
-name = "forgejo-cli"
-version = "0.8.0-dev"
+name = "forge"
+version = "0.1.0-dev"
 dependencies = [
  "auth-git2",
  "base64ct",
@@ -672,6 +651,27 @@ dependencies = [
  "unic-langid",
  "url",
  "uuid",
+]
+
+[[package]]
+name = "forgejo-api"
+version = "0.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1597f08c98eed3f55fedcfeee8b005f9e617dab3c61393a2d8ce437181ad5d0b"
+dependencies = [
+ "base64ct",
+ "bytes",
+ "futures",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "soft_assert",
+ "thiserror",
+ "time",
+ "tokio",
+ "url",
+ "urlencoding",
+ "zeroize",
 ]
 
 [[package]]

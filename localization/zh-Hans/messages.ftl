@@ -5,10 +5,10 @@
     }
 msg-whoami = 当前已登录 { $name }@{ $host }
 msg-auth-login-oauth_unsupported =
-    您安装的 fj 不支持对 { $host_domain } 使用 `login`
+    您安装的 forge 不支持对 { $host_domain } 使用 `login`
 
     请访问 { $applications_url }
-    创建令牌，并使用 `fj auth add-key` 登录
+    创建令牌，并使用 `forge auth add-key` 登录
 msg-auth-login-canceled = 登录已取消
 msg-auth-login-browser_success = 已认证！请关闭此标签页并返回终端。
 msg-auth-login-browser_failure = 认证失败。
@@ -615,7 +615,7 @@ msg-release-asset-download-success =
     }
 msg-tag-create-success = 已创建标签 { $name }
 msg-tag-delete-success = 已删除标签 { $name }
-msg-version-update_check-hint = 使用 `fj version --check` 检查新版本
+msg-version-update_check-hint = 使用 `forge version --check` 检查新版本
 msg-version-update_check-current = 已是最新！
 msg-version-update_check-behind =
     新版本可用：{ $new_version }
@@ -635,7 +635,7 @@ help-cmd-auth-add_token = 为实例添加应用程序令牌
 help-cmd-auth-add_token-long =
     为实例添加应用程序令牌
 
-    如果 `fj auth login` 无效，请使用此选项。
+    如果 `forge auth login` 无效，请使用此选项。
 help-arg-auth-add_token-token = 要添加的密钥。如果未提供，将从标准输入读取密钥
 help-cmd-auth-list = 列出您当前已登录的所有实例
 help-cmd-actions-tasks = 列出仓库上的任务
@@ -1333,10 +1333,10 @@ help-cmd-repo-unwatch = 取消订阅一个仓库
 help-cmd-repo-watch_status = 检查您当前的关注状态
 help-arg-repo-watch_status-list = 列出所有已关注的仓库，而不是检查状态
 help-arg-cwd = 将工作目录设置为 <CWD>
-msg-project-dir-not-found = 找不到 fj 的项目目录
+msg-project-dir-not-found = 找不到 forge 的项目目录
 msg-old-key-file-read =
     注意：正在从旧位置的密钥文件中读取。
         该位置已弃用。密钥文件将保存到新位置。
 msg-save-migrated-key-file-fail =
     { STYLE("bold", "yellow") }无法将密钥文件迁移到新位置！
-    请确保 fj 可以写入 { $path }。旧文件未被修改。{ STYLE("reset") }
+    请确保 forge 可以写入 { $path }。旧文件未被修改。{ STYLE("reset") }

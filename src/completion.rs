@@ -26,7 +26,7 @@ impl CompletionCommand {
         use Shell::*;
         use clap_complete::Shell as CCShell;
         let mut cmd = crate::App::command();
-        let app_name = self.bin_name.as_deref().unwrap_or("fj");
+        let app_name = self.bin_name.as_deref().unwrap_or("forge");
         let mut writer = std::io::stdout();
         match self.shell {
             Bash => clap_complete::generate(CCShell::Bash, &mut cmd, app_name, &mut writer),

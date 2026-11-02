@@ -5,10 +5,10 @@ msg-org-team-member-list-no_results = Brak wyników.
 msg-repo-migrate-password_prompt = Hasło:
 msg-whoami = obecnie zalogowano jako { $name }@{ $host }
 msg-auth-login-oauth_unsupported =
-    Twoja instalacja fj nie wspiera polecenia `login` dla { $host_domain }
+    Twoja instalacja forge nie wspiera polecenia `login` dla { $host_domain }
 
     Odwiedź { $applications_url }
-    aby utworzyć token, następnie użyj go aby zalogować się za pomocą `fj auth add-key`
+    aby utworzyć token, następnie użyj go aby zalogować się za pomocą `forge auth add-key`
 msg-auth-login-canceled = Logowanie anulowane
 msg-auth-login-browser_success = Uwierzytelniono! Zamknij tę kartę i powróć do swojego terminala.
 msg-auth-login-browser_failure = Uwierzytelnienie zakończone niepowodzeniem.
